@@ -1,6 +1,6 @@
-import gsap from 'gsap';
 import * as THREE from 'three';
-console.log(gsap)
+// import gsap from 'gsap';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 console.log("helloooo");
 
@@ -105,6 +105,18 @@ console.log(`boxMesh position normalized: ${boxMesh.position.normalize().x}, ${b
 console.log(`boxMesh position distance to camera: ${boxMesh.position.distanceTo(camera.position)}`)
 
 // -----------------------
+// mouse interactions
+// -----------------------
+
+const cursor = { x: 0, y: 0}
+window.addEventListener('mousemove', (event) => {
+    cursor.x = event.clientX / sizes.width - 0.5
+    cursor.y = -(event.clientY / sizes.height - 0.5)
+    console.log(cursor)
+    // console.log(event)
+})
+
+// -----------------------
 // animations
 // -----------------------
 
@@ -112,18 +124,54 @@ console.log(`boxMesh position distance to camera: ${boxMesh.position.distanceTo(
 
 const clock = new THREE.Clock();
 
-const render = () => {
-    // console.log('tick')
-    const elapsedTime = clock.getElapsedTime();
-    window.requestAnimationFrame(render); // pass the same function
+const groupAnimations = (group, elapsedTime) => {
     group.rotation.x -= 0.001
     group.rotation.y += 0.01
     group.position.x = Math.cos(elapsedTime) * 2
-    group.position.y = Math.cos(elapsedTime) * .25
+    group.position.y = Math.cos(elapsedTime) * 0.25
+}
+const sphereAnimations = (sphereMesh, elapsedTime) => {
     sphereMesh.rotation.x = elapsedTime * Math.PI / 8
     sphereMesh.rotation.y = elapsedTime * Math.PI / 4
     sphereMesh.position.y = Math.sin(elapsedTime * 2) * .5
     sphereMesh.position.z = Math.cos(elapsedTime * 2) * .5
+}
+
+const updateCamera = (elapsedTime, cursor) => {
+    
+    // camera.position.x = cursor.x * Math.PI * -10
+    // camera.position.y = cursor.y * Math.PI * -10
+    
+    // spinning around axes helper
+    camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 10
+    camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 10
+    camera.position.y = cursor.y * 10
+    
+    camera.lookAt(axesHelper.position)
+}
+
+// -----------------------
+// contorls
+// -----------------------
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+
+// -----------------------
+// render
+// -----------------------
+
+const render = () => {
+    // console.log('tick')
+    const elapsedTime = clock.getElapsedTime();
+    window.requestAnimationFrame(render); // pass the same function
+    
+    groupAnimations(group, elapsedTime);
+    sphereAnimations(sphereMesh, elapsedTime);
+    // updateCamera(elapsedTime, cursor);
+    
+    controls.update();
+
     renderer.render(scene, camera);
     // camera.lookAt(sphereMesh.position)
 }

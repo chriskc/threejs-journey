@@ -86,7 +86,7 @@ const renderer = new THREE.WebGLRenderer({
 // cameras
 // -----------------------
 const aspectRatio = sizes.width / sizes.height
-const camera = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 100);
+const camera = new THREE.PerspectiveCamera(75, aspectRatio, .1, 100); // aperature, aspectRatio, frontClip, backClip
 // const orthoZoom = 3
 // const camera = new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100);
 camera.position.x = 2;
@@ -117,6 +117,21 @@ window.addEventListener('mousemove', (event) => {
 })
 
 // -----------------------
+// window interactions
+// -----------------------
+
+window.addEventListener('resize', () => {
+    sizes.width = window.innerWidth,
+    sizes.height = window.innerHeight
+    
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+    renderer.setSize(sizes.width, sizes.height)
+}
+
+)
+
+// -----------------------
 // animations
 // -----------------------
 
@@ -144,14 +159,14 @@ const updateCamera = (elapsedTime, cursor) => {
     
     // spinning around axes helper
     camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 10
-    camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 10
-    camera.position.y = cursor.y * 10
+    camera.position.z = Math.cos(cursor.x * Math.PI * 2) * -10
+    camera.position.y = cursor.y * -10
     
     camera.lookAt(axesHelper.position)
 }
 
 // -----------------------
-// contorls
+// controls
 // -----------------------
 
 const controls = new OrbitControls(camera, canvas);

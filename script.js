@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 // import gsap from 'gsap';
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 console.log("helloooo");
 
@@ -14,7 +13,7 @@ const scene = new THREE.Scene();
 // material
 // -----------------------
 
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+const material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true })
 
 // -----------------------
 // objects
@@ -32,6 +31,7 @@ const boxMesh2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 const boxMesh3 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 boxMesh2.position.x = 2;
 boxMesh3.position.x = -2;
+
 group.add(boxMesh);
 group.add(boxMesh2);
 group.add(boxMesh3);
@@ -45,6 +45,7 @@ group.rotation.order = 'YXZ';
 group.rotation.x = Math.PI * 1/4;
 group.rotation.y = Math.PI * 1/3;
 group.rotation.z = Math.PI * 1/5;
+// group.scale.y = 0.2 + Math.abs( 3 * Math.sin(frame))
 console.log(`group quaternion: x=${group.quaternion.x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
 
 group.rotation.reorder('ZXY'); // changes order but keeps the same rotation
@@ -89,12 +90,15 @@ const aspectRatio = sizes.width / sizes.height
 const camera = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 100);
 // const orthoZoom = 3
 // const camera = new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100);
-camera.position.x = 2;
-camera.position.y = 1;
-camera.position.z = 3;
+camera.position.set(2, 1, 10);
+
 camera.lookAt(axesHelper.position);
 renderer.setSize(sizes.width, sizes.height);
 renderer.render(scene, camera);
+
+// window.addEventListener('scroll', (event) => {
+//     event
+// })
 
 // -----------------------
 // logging
@@ -113,6 +117,8 @@ window.addEventListener('mousemove', (event) => {
     cursor.x = event.clientX / sizes.width - 0.5
     cursor.y = -(event.clientY / sizes.height - 0.5)
     console.log(cursor)
+    camera.fov = 35 + cursor.y * 100
+    
     // console.log(event)
 })
 
@@ -146,16 +152,16 @@ const updateCamera = (elapsedTime, cursor) => {
     camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 10
     camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 10
     camera.position.y = cursor.y * 10
-    
+    camera.setFocalLength(35 + cursor.y * 100)
     camera.lookAt(axesHelper.position)
 }
 
 // -----------------------
-// contorls
+// controls
 // -----------------------
 
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
+// const controls = new OrbitControls(camera, canvas);
+// controls.enableDamping = true;
 
 // -----------------------
 // render
@@ -168,13 +174,19 @@ const render = () => {
     
     groupAnimations(group, elapsedTime);
     sphereAnimations(sphereMesh, elapsedTime);
-    // updateCamera(elapsedTime, cursor);
+    updateCamera(elapsedTime, cursor);
     
-    controls.update();
-
+    // controls.update();
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     renderer.render(scene, camera);
-    // camera.lookAt(sphereMesh.position)
+    
+    camera.lookAt(sphereMesh.position)
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
+render()
+
 
 // alternate animation using gsap
 // -------------------------------
@@ -184,5 +196,3 @@ const render = () => {
 // const render = () => {
 //     renderer.render(scene, camera);
 // }
-
-render()

@@ -6,11 +6,6 @@ import './style.css';
 
 console.log("helloooo");
 
-// -----------------------
-// debug
-// -----------------------
-
-const gui = new GUI()   
 
 // -----------------------
 // container
@@ -62,7 +57,6 @@ group.rotation.reorder('ZXY'); // changes order but keeps the same rotation
 group.rotation.set(.3, .4, .5); // set rotation again to see changes to reorder
 console.log(`group quaternion: x=${group.quaternion. x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
 // group.position.set(2, 2, 2)
-gui.add(group.position, 'x', -10, 10, .01)
 scene.add(group);
 
 const geometry = new THREE.BufferGeometry()
@@ -74,7 +68,8 @@ const positionArray = new Float32Array([
 const positionAttribute = new THREE.BufferAttribute(positionArray, 3)
 
 geometry.setAttribute('position', positionAttribute)
-scene.add(new THREE.Mesh(geometry, solidMaterial))
+const triangle = new THREE.Mesh(geometry, solidMaterial)
+scene.add(triangle)
 
 const count = {value: 50}
 
@@ -91,6 +86,16 @@ const wavyPositionAttribute = new THREE.BufferAttribute(wavyArray, 3)
 
 wavyPlane.setAttribute('position', wavyPositionAttribute)
 scene.add(new THREE.Mesh(wavyPlane, material))
+
+// -----------------------
+// debug gui
+// -----------------------
+
+const gui = new GUI()
+
+gui.add(group.position, 'x', -10, 10, .01)
+
+gui.add(triangle.position, 'y', -10, 10, .01).name('triangle elevation')
 
 gui.add(count, 'value', 0, 100, 1)
 gui.add(material, 'wireframe')

@@ -1,8 +1,16 @@
+import GUI from 'lil-gui';
 import * as THREE from 'three';
-// import gsap from 'gsap';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import './style.css';
+// import gsap from 'gsap';
 
 console.log("helloooo");
+
+// -----------------------
+// debug
+// -----------------------
+
+const gui = new GUI()   
 
 // -----------------------
 // container
@@ -14,28 +22,30 @@ const scene = new THREE.Scene();
 // material
 // -----------------------
 
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+const material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true })
+const solidMaterial = new THREE.MeshBasicMaterial({ color: 0x0000cc, wireframe: false })
 
 // -----------------------
 // objects
 // -----------------------
 
-const sphereGeometry = new THREE.SphereGeometry(.75, 24, 24);
+const sphereGeometry = new THREE.SphereGeometry(.75, 10, 10);
 const sphereMesh = new THREE.Mesh(sphereGeometry, material);
 sphereMesh.position.x = -1;
 scene.add(sphereMesh);
 
 const group = new THREE.Group();
 
-const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
+const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1, 2, 2, 2), material);
 const boxMesh2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 const boxMesh3 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
+
 boxMesh2.position.x = 2;
 boxMesh3.position.x = -2;
+
 group.add(boxMesh);
 group.add(boxMesh2);
 group.add(boxMesh3);
-
 
 group.position.x = 1;
 // group.position.set(.65, .25, -0.5)
@@ -45,13 +55,53 @@ group.rotation.order = 'YXZ';
 group.rotation.x = Math.PI * 1/4;
 group.rotation.y = Math.PI * 1/3;
 group.rotation.z = Math.PI * 1/5;
+// group.scale.y = 0.2 + Math.abs( 3 * Math.sin(frame))
 console.log(`group quaternion: x=${group.quaternion.x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
 
 group.rotation.reorder('ZXY'); // changes order but keeps the same rotation
 group.rotation.set(.3, .4, .5); // set rotation again to see changes to reorder
 console.log(`group quaternion: x=${group.quaternion. x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
-
+// group.position.set(2, 2, 2)
+gui.add(group.position, 'x', -10, 10, .01)
 scene.add(group);
+
+const geometry = new THREE.BufferGeometry()
+const positionArray = new Float32Array([
+    0, 0, 0,
+    1, 0, 1,
+    1, 1, 0
+])
+const positionAttribute = new THREE.BufferAttribute(positionArray, 3)
+
+geometry.setAttribute('position', positionAttribute)
+scene.add(new THREE.Mesh(geometry, solidMaterial))
+
+const count = {value: 50}
+
+const wavyPlane = new THREE.BufferGeometry()
+const wavyArray = new Float32Array(count.value * 3 * 3) // 3 values per vertex and 3 points per triangle
+
+for(let i = 0; i < count.value * 3; i += 3){
+    wavyArray[i] = Math.cos(i)
+    wavyArray[i+1] = i / 20
+    wavyArray[i+2] = Math.sin(i)
+}
+// console.log(wavyArray)
+const wavyPositionAttribute = new THREE.BufferAttribute(wavyArray, 3)
+
+wavyPlane.setAttribute('position', wavyPositionAttribute)
+scene.add(new THREE.Mesh(wavyPlane, material))
+
+gui.add(count, 'value', 0, 100, 1)
+gui.add(material, 'wireframe')
+gui
+    .addColor(material, 'color')
+    .onChange((value) => {
+        console.log(value.getHexString())
+    })
+
+// gui.add(solidMaterial, 'wireframe')
+// gui.addColor(solidMaterial, 'color')
 
 // -----------------------
 // helpers
@@ -67,14 +117,12 @@ scene.add(gridHelper);
 
 // -----------------------
 // renderer
-// -----------------------
+// -----------------------l
 
 const canvas = document.querySelector('canvas.webgl');
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
-    // width: 800,
-    // height: 600
 }
 console.log(sizes)
 
@@ -89,12 +137,15 @@ const aspectRatio = sizes.width / sizes.height
 const camera = new THREE.PerspectiveCamera(75, aspectRatio, .1, 100); // aperature, aspectRatio, frontClip, backClip
 // const orthoZoom = 3
 // const camera = new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100);
-camera.position.x = 2;
-camera.position.y = 1;
-camera.position.z = 3;
+camera.position.set(2, 1, 10);
+
 camera.lookAt(axesHelper.position);
 renderer.setSize(sizes.width, sizes.height);
 renderer.render(scene, camera);
+
+// window.addEventListener('scroll', (event) => {
+//     event
+// })
 
 // -----------------------
 // logging
@@ -112,7 +163,9 @@ const cursor = { x: 0, y: 0}
 window.addEventListener('mousemove', (event) => {
     cursor.x = event.clientX / sizes.width - 0.5
     cursor.y = -(event.clientY / sizes.height - 0.5)
-    console.log(cursor)
+    // console.log(cursor)
+    camera.fov = 35 + cursor.y * 100
+    
     // console.log(event)
 })
 
@@ -142,8 +195,8 @@ const clock = new THREE.Clock();
 const groupAnimations = (group, elapsedTime) => {
     group.rotation.x -= 0.001
     group.rotation.y += 0.01
-    group.position.x = Math.cos(elapsedTime) * 2
-    group.position.y = Math.cos(elapsedTime) * 0.25
+    group.position.x = Math.cos(elapsedTime) * 2 + 5
+    group.position.y = Math.cos(elapsedTime) * 0.25 + 2
 }
 const sphereAnimations = (sphereMesh, elapsedTime) => {
     sphereMesh.rotation.x = elapsedTime * Math.PI / 8
@@ -161,7 +214,7 @@ const updateCamera = (elapsedTime, cursor) => {
     camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 10
     camera.position.z = Math.cos(cursor.x * Math.PI * 2) * -10
     camera.position.y = cursor.y * -10
-    
+    camera.setFocalLength(35 + cursor.y * 100)
     camera.lookAt(axesHelper.position)
 }
 
@@ -186,10 +239,16 @@ const render = () => {
     // updateCamera(elapsedTime, cursor);
     
     controls.update();
-
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     renderer.render(scene, camera);
-    // camera.lookAt(sphereMesh.position)
+    
+    camera.lookAt(sphereMesh.position)
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
+render()
+
 
 // alternate animation using gsap
 // -------------------------------
@@ -199,5 +258,3 @@ const render = () => {
 // const render = () => {
 //     renderer.render(scene, camera);
 // }
-
-render()

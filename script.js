@@ -1,11 +1,12 @@
+import gsap from 'gsap';
 import GUI from 'lil-gui';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import './style.css';
-// import gsap from 'gsap';
 
 console.log("helloooo");
 
+const defaultObject = {}
 
 // -----------------------
 // container
@@ -17,14 +18,19 @@ const scene = new THREE.Scene();
 // material
 // -----------------------
 
-const material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true })
+defaultObject.color = '#ff00ff'
+
+const material = new THREE.MeshBasicMaterial({ color: defaultObject.color, wireframe: true })
 const solidMaterial = new THREE.MeshBasicMaterial({ color: 0x0000cc, wireframe: false })
 
 // -----------------------
 // sphere
 // -----------------------
 
-const sphereGeometry = new THREE.SphereGeometry(.75, 10, 10);
+defaultObject.radius = .75
+defaultObject.subdivisions = 10
+
+const sphereGeometry = new THREE.SphereGeometry(defaultObject.radius, defaultObject.subdivisions, defaultObject.subdivisions);
 const sphereMesh = new THREE.Mesh(sphereGeometry, material);
 sphereMesh.position.x = -1;
 scene.add(sphereMesh);
@@ -90,7 +96,8 @@ for(let i = 0; i < count.value * 3; i += 3){
 const wavyPositionAttribute = new THREE.BufferAttribute(wavyArray, 3)
 
 wavyPlane.setAttribute('position', wavyPositionAttribute)
-scene.add(new THREE.Mesh(wavyPlane, material))
+const wavyMesh = new THREE.Mesh(wavyPlane, material) 
+scene.add(wavyMesh)
 
 // -----------------------
 // helpers
@@ -215,6 +222,15 @@ const updateCamera = (elapsedTime, cursor, camera) => {
 }
 
 // -----------------------
+// animations
+// -----------------------
+
+defaultObject.spin = () => {
+    gsap.to(group.rotation, { duration: 1, x: group.rotation.x + Math.PI * 2 });
+    gsap.to(wavyMesh.rotation, { duration: 1, y: wavyMesh.rotation.y + Math.PI * 2 });
+}
+
+// -----------------------
 // controls
 // -----------------------
 
@@ -225,48 +241,78 @@ controls.enableDamping = true;
 // debug gui
 // -----------------------
 
-const gui = new GUI()
+const gui = new GUI({
+    width: 300,
+    closeFolders: false,
+    title: 'best pizza',
+})
 
-gui.add(group.position, 'x', -10, 10, .01)
+// gui.hide()
 
-gui.add(triangle.position, 'y', -10, 10, .01).name('triangle elevation')
-gui.add(triangle, 'visible').name('triangle visibility')
+// toggle debug ui with 'h' kb shortcut
+window.addEventListener('keydown', (event) => {
+    if (event.key == 'h')
+        gui.show(gui._hidden)
+})
 
-// gui.add(count, 'value') // not working
-gui.add(material, 'wireframe')
-gui
-    .addColor(material, 'color')
+
+// geometry
+// -------------
+const sphereTweaks = gui.addFolder('sphere')
+sphereTweaks.add(defaultObject, 'subdivisions', 5, 20, 1).onFinishChange(() => {
+    sphereMesh.geometry.dispose()
+    sphereMesh.geometry = new THREE.SphereGeometry(defaultObject.radius, defaultObject.subdivisions, defaultObject.subdivisions)
+    console.log('Geometries on GPU:', renderer.info.memory.geometries);
+})
+
+// positions
+// -------------
+
+const triangleTweaks = gui.addFolder('triangle')
+triangleTweaks.add(triangle.position, 'y', -10, 10, .01).name('triangle elevation')
+triangleTweaks.add(triangle, 'visible').name('triangle visibility')
+
+// materials
+// -------------
+
+const materialTweaks = gui.addFolder('materials')
+materialTweaks.add(material, 'wireframe')
+materialTweaks
+    .addColor(defaultObject, 'color')
     .onChange((value) => {
-        console.log(value.getHexString())
+        material.color.set(defaultObject.color)
+        console.log(defaultObject.color)
     })
+materialTweaks.add(solidMaterial, 'wireframe')
+materialTweaks.addColor(solidMaterial, 'color')
 
-gui.add(solidMaterial, 'wireframe')
-gui.addColor(solidMaterial, 'color')
-
-gui.add(cameraSelection, 'type', cameras).onChange((newCamera) => {
-    // Save the old camera's position and target BEFORE the switch
-    const oldPosition = controls.object.position.clone();
+// cameras
+// -------------
+const cameraTweaks = gui.addFolder('cameras')
+cameraTweaks.add(cameraSelection, 'type', cameras).onChange((newCamera) => {
     const oldTarget = controls.target.clone();
+    const oldPosition = controls.object.position.clone();
     
-    // Copy to the new camera
     newCamera.position.copy(oldPosition);
     newCamera.lookAt(oldTarget);
     
-    // Update the controls to use the new camera
     controls.object = newCamera;
     controls.target.copy(oldTarget);
     
-    // Update aspect ratio for perspective camera
     if (newCamera.isPerspectiveCamera) {
         newCamera.aspect = sizes.width / sizes.height;
         newCamera.updateProjectionMatrix();
     } else if (newCamera.isOrthographicCamera) {
-        // Update orthographic camera frustum if needed
         newCamera.updateProjectionMatrix();
     }
     
     controls.update();
 });
+
+// animations
+// -------------
+const animationTweaks = gui.addFolder('animations')
+animationTweaks.add(defaultObject, 'spin')
 
 // -----------------------
 // render
@@ -293,11 +339,3 @@ const render = () => {
 render()
 
 
-// alternate animation using gsap
-// -------------------------------
-// gsap.to(group.position, { duration: 1, delay: 1, x: 1});
-// gsap.to(group.position, { duration: 1, delay: 2, x: 0});
-
-// const render = () => {
-//     renderer.render(scene, camera);
-// }

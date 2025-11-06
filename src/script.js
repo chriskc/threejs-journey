@@ -4,26 +4,90 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import './style.css';
 
+
 console.log("helloooo");
 
 const defaultObject = {}
 
-// -----------------------
-// container
-// -----------------------
-
 const scene = new THREE.Scene();
 
 // -----------------------
-// material
+// TEXTURES
+// -----------------------
+
+// native js way to load textures
+// const image = new Image()
+// const texture = new THREE.Texture(image)
+// image.addEventListener('load', () => {
+//     texture.needsUpdate = true
+// })
+// image.src = 'static/textures/door/color.jpg'
+
+const loadingManager = new THREE.LoadingManager()
+loadingManager.onStart = () => {
+    console.log("loading started")    
+}
+loadingManager.onLoad = () => {
+    console.log("loading finished")
+}
+loadingManager.onProgress = () => {
+    console.log("loading in progress")
+}
+loadingManager.onError = () => {
+    console.log("loading error")
+}
+
+// easiser way with three's texture loader
+const textureLoader = new THREE.TextureLoader(loadingManager)
+// const colorTexture = textureLoader.load('static/textures/door/color.jpg')
+const colorTexture = textureLoader.load('static/textures/minecraft.png')
+colorTexture.colorSpace = THREE.SRGBColorSpace // for correct color space
+colorTexture.repeat.x = 2
+colorTexture.repeat.y = 2
+colorTexture.wrapT = THREE.RepeatWrapping
+colorTexture.wrapS = THREE.MirroredRepeatWrapping
+colorTexture.offset.x = .25
+colorTexture.offset.y = .5
+colorTexture.rotation = Math.PI / 3
+colorTexture.center.x = .5
+colorTexture.center.y = .5
+
+// mip mapping affects how textures get rendered
+colorTexture.generateMipmaps = false
+// colorTexture.minFilter = THREE.NearestFilter 
+colorTexture.magFilter = THREE.NearestFilter
+
+
+const alphaTexture = textureLoader.load('/static/textures/door/alpha.jpg')
+const heightTexture = textureLoader.load('/static/textures/door/height.jpg')
+const normalTexture = textureLoader.load('/static/textures/door/normal.jpg')
+const ambientOcclusionTexture = textureLoader.load('/static/textures/door/ambientOcclusion.jpg')
+const metalnessTexture = textureLoader.load('/static/textures/door/metalness.jpg')
+const roughnessTexture = textureLoader.load('/static/textures/door/roughness.jpg')
+
+console.log(colorTexture)
+console.log(alphaTexture)
+console.log(heightTexture)
+console.log(normalTexture)
+console.log(ambientOcclusionTexture)
+console.log(metalnessTexture)
+console.log(roughnessTexture)
+
+
+// -----------------------
+// MATERIALS
 // -----------------------
 
 defaultObject.color = '#ff00ff'
 
 const material = new THREE.MeshBasicMaterial({ color: defaultObject.color, wireframe: true })
-const solidMaterial = new THREE.MeshBasicMaterial({ color: 0x0000cc, wireframe: false })
+const solidMaterial = new THREE.MeshBasicMaterial({ color: 0x0000cc, wireframe: false})
+const doorMaterial = new THREE.MeshBasicMaterial({map: colorTexture})
 
 // -----------------------
+// GEOMETRY
+// -----------------------
+
 // sphere
 // -----------------------
 
@@ -35,7 +99,6 @@ const sphereMesh = new THREE.Mesh(sphereGeometry, material);
 sphereMesh.position.x = -1;
 scene.add(sphereMesh);
 
-// -----------------------
 // boxes
 // -----------------------
 
@@ -45,46 +108,51 @@ const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1, 2, 2, 2), ma
 const boxMesh2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 const boxMesh3 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 
+const boxMesh4 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), doorMaterial);
+scene.add(boxMesh4)
+
 boxMesh2.position.x = 2;
 boxMesh3.position.x = -2;
+boxMesh4.position.y = -2;
 
 group.add(boxMesh, boxMesh2, boxMesh3)
 
 group.position.set(.65, .25, -0.5)
 group.scale.set(.75, 1, 1.25);
-
 group.rotation.order = 'YXZ';
 group.rotation.x = Math.PI * 1/4;
 group.rotation.y = Math.PI * 1/3;
 group.rotation.z = Math.PI * 1/5;
 
 console.log(`group quaternion: x=${group.quaternion.x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
-
 group.rotation.reorder('ZXY'); // changes order but keeps the same rotation
 group.rotation.set(.3, .4, .5); // set rotation again to see changes to reorder
 console.log(`group quaternion: x=${group.quaternion. x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
 
 scene.add(group);
 
-// -----------------------
-// custom geometries
+// triangle
 // -----------------------
 
 const geometry = new THREE.BufferGeometry()
 const positionArray = new Float32Array([
     0, 0, 0,
-    1, 0, 1,
-    1, 1, 0
+    4, -1, 3,
+    2, -.25, -3
 ])
 const positionAttribute = new THREE.BufferAttribute(positionArray, 3)
 
 geometry.setAttribute('position', positionAttribute)
-const triangle = new THREE.Mesh(geometry, solidMaterial)
+// const triangle = new THREE.Mesh(geometry, solidMaterial)
+const triangle = new THREE.Mesh(geometry, doorMaterial)
 scene.add(triangle)
 
 const count = { value: 50 }
 
-const wavyPlane = new THREE.BufferGeometry()
+// wavy
+// -----------------------
+
+const wavyGeometry = new THREE.BufferGeometry()
 const wavyArray = new Float32Array(count.value * 3 * 3) // 3 values per vertex and 3 points per triangle
 
 for(let i = 0; i < count.value * 3; i += 3){
@@ -92,15 +160,14 @@ for(let i = 0; i < count.value * 3; i += 3){
     wavyArray[i+1] = i / 20
     wavyArray[i+2] = Math.sin(i)
 }
-// console.log(wavyArray)
-const wavyPositionAttribute = new THREE.BufferAttribute(wavyArray, 3)
+const wavyAttribute = new THREE.BufferAttribute(wavyArray, 3)
+wavyGeometry.setAttribute('position', wavyAttribute)
 
-wavyPlane.setAttribute('position', wavyPositionAttribute)
-const wavyMesh = new THREE.Mesh(wavyPlane, material) 
+const wavyMesh = new THREE.Mesh(wavyGeometry, material) 
 scene.add(wavyMesh)
 
 // -----------------------
-// helpers
+// HELPERS
 // -----------------------
 
 const axesHelper = new THREE.AxesHelper(1);
@@ -112,7 +179,7 @@ const gridHelper = new THREE.GridHelper(10, 10);
 scene.add(gridHelper);
 
 // -----------------------
-// renderer
+// RENDERER
 // -----------------------l
 
 const canvas = document.querySelector('canvas.webgl');
@@ -127,7 +194,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 // -----------------------
-// cameras
+// CAMERAS
 // -----------------------
 const aspectRatio = sizes.width / sizes.height
 const orthoZoom = 3
@@ -148,20 +215,12 @@ cameraSelection.type.lookAt(axesHelper.position);
 renderer.setSize(sizes.width, sizes.height);
 renderer.render(scene, cameraSelection.type);
 
-// window.addEventListener('scroll', (event) => {
-//     event
-// })
-
-// -----------------------
-// logging
-// -----------------------
-
 console.log(`boxMesh position length: ${boxMesh.position.length()}`)
 console.log(`boxMesh position normalized: ${boxMesh.position.normalize().x}, ${boxMesh.position.normalize().y}, ${boxMesh.position.normalize().z}`)
 console.log(`boxMesh position distance to camera: ${boxMesh.position.distanceTo(cameraSelection.type.position)}`)
 
 // -----------------------
-// mouse interactions
+// INTERACTIONS
 // -----------------------
 
 const cursor = { x: 0, y: 0}
@@ -174,10 +233,6 @@ window.addEventListener('mousemove', (event) => {
     // console.log(event)
 })
 
-// -----------------------
-// window interactions
-// -----------------------
-
 window.addEventListener('resize', () => {
     sizes.width = window.innerWidth,
     sizes.height = window.innerHeight
@@ -188,7 +243,7 @@ window.addEventListener('resize', () => {
 })
 
 // -----------------------
-// animations
+// ANIMATIONS
 // -----------------------
 
 // requestAnimationFrame is to call the function provided on the next frame
@@ -221,24 +276,20 @@ const updateCamera = (elapsedTime, cursor, camera) => {
     camera.lookAt(axesHelper.position)
 }
 
-// -----------------------
-// animations
-// -----------------------
-
 defaultObject.spin = () => {
     gsap.to(group.rotation, { duration: 1, x: group.rotation.x + Math.PI * 2 });
     gsap.to(wavyMesh.rotation, { duration: 1, y: wavyMesh.rotation.y + Math.PI * 2 });
 }
 
 // -----------------------
-// controls
+// CONTROLS
 // -----------------------
 
 const controls = new OrbitControls(cameraSelection.type, canvas);
 controls.enableDamping = true;
 
 // -----------------------
-// debug gui
+// DEBUG
 // -----------------------
 
 const gui = new GUI({
@@ -314,8 +365,9 @@ cameraTweaks.add(cameraSelection, 'type', cameras).onChange((newCamera) => {
 const animationTweaks = gui.addFolder('animations')
 animationTweaks.add(defaultObject, 'spin')
 
+
 // -----------------------
-// render
+// RENDER
 // -----------------------
 
 const render = () => {

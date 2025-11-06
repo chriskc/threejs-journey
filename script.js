@@ -1,8 +1,16 @@
+import GUI from 'lil-gui';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import './style.css';
 // import gsap from 'gsap';
 
 console.log("helloooo");
+
+// -----------------------
+// debug
+// -----------------------
+
+const gui = new GUI()   
 
 // -----------------------
 // container
@@ -21,7 +29,7 @@ const solidMaterial = new THREE.MeshBasicMaterial({ color: 0x0000cc, wireframe: 
 // objects
 // -----------------------
 
-const sphereGeometry = new THREE.SphereGeometry(.75, 24, 24);
+const sphereGeometry = new THREE.SphereGeometry(.75, 10, 10);
 const sphereMesh = new THREE.Mesh(sphereGeometry, material);
 sphereMesh.position.x = -1;
 scene.add(sphereMesh);
@@ -31,6 +39,7 @@ const group = new THREE.Group();
 const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1, 2, 2, 2), material);
 const boxMesh2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 const boxMesh3 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
+
 boxMesh2.position.x = 2;
 boxMesh3.position.x = -2;
 
@@ -53,6 +62,7 @@ group.rotation.reorder('ZXY'); // changes order but keeps the same rotation
 group.rotation.set(.3, .4, .5); // set rotation again to see changes to reorder
 console.log(`group quaternion: x=${group.quaternion. x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
 // group.position.set(2, 2, 2)
+gui.add(group.position, 'x', -10, 10, .01)
 scene.add(group);
 
 const geometry = new THREE.BufferGeometry()
@@ -66,21 +76,32 @@ const positionAttribute = new THREE.BufferAttribute(positionArray, 3)
 geometry.setAttribute('position', positionAttribute)
 scene.add(new THREE.Mesh(geometry, solidMaterial))
 
-const count = 50
-const wavyPlane = new THREE.BufferGeometry()
-const wavyArray = new Float32Array(count * 3 * 3) // 3 values per vertex and 3 points per triangle
+const count = {value: 50}
 
-for(let i = 0; i < count * 3; i += 3){
+const wavyPlane = new THREE.BufferGeometry()
+const wavyArray = new Float32Array(count.value * 3 * 3) // 3 values per vertex and 3 points per triangle
+
+for(let i = 0; i < count.value * 3; i += 3){
     wavyArray[i] = Math.cos(i)
     wavyArray[i+1] = i / 20
     wavyArray[i+2] = Math.sin(i)
 }
-console.log(wavyArray)
+// console.log(wavyArray)
 const wavyPositionAttribute = new THREE.BufferAttribute(wavyArray, 3)
 
 wavyPlane.setAttribute('position', wavyPositionAttribute)
 scene.add(new THREE.Mesh(wavyPlane, material))
 
+gui.add(count, 'value', 0, 100, 1)
+gui.add(material, 'wireframe')
+gui
+    .addColor(material, 'color')
+    .onChange((value) => {
+        console.log(value.getHexString())
+    })
+
+// gui.add(solidMaterial, 'wireframe')
+// gui.addColor(solidMaterial, 'color')
 
 // -----------------------
 // helpers
@@ -102,8 +123,6 @@ const canvas = document.querySelector('canvas.webgl');
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
-    // width: 800,
-    // height: 600
 }
 console.log(sizes)
 
@@ -144,7 +163,7 @@ const cursor = { x: 0, y: 0}
 window.addEventListener('mousemove', (event) => {
     cursor.x = event.clientX / sizes.width - 0.5
     cursor.y = -(event.clientY / sizes.height - 0.5)
-    console.log(cursor)
+    // console.log(cursor)
     camera.fov = 35 + cursor.y * 100
     
     // console.log(event)

@@ -21,13 +21,17 @@ const material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true 
 const solidMaterial = new THREE.MeshBasicMaterial({ color: 0x0000cc, wireframe: false })
 
 // -----------------------
-// objects
+// sphere
 // -----------------------
 
 const sphereGeometry = new THREE.SphereGeometry(.75, 10, 10);
 const sphereMesh = new THREE.Mesh(sphereGeometry, material);
 sphereMesh.position.x = -1;
 scene.add(sphereMesh);
+
+// -----------------------
+// boxes
+// -----------------------
 
 const group = new THREE.Group();
 
@@ -38,26 +42,27 @@ const boxMesh3 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 boxMesh2.position.x = 2;
 boxMesh3.position.x = -2;
 
-group.add(boxMesh);
-group.add(boxMesh2);
-group.add(boxMesh3);
+group.add(boxMesh, boxMesh2, boxMesh3)
 
-group.position.x = 1;
-// group.position.set(.65, .25, -0.5)
+group.position.set(.65, .25, -0.5)
 group.scale.set(.75, 1, 1.25);
 
 group.rotation.order = 'YXZ';
 group.rotation.x = Math.PI * 1/4;
 group.rotation.y = Math.PI * 1/3;
 group.rotation.z = Math.PI * 1/5;
-// group.scale.y = 0.2 + Math.abs( 3 * Math.sin(frame))
+
 console.log(`group quaternion: x=${group.quaternion.x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
 
 group.rotation.reorder('ZXY'); // changes order but keeps the same rotation
 group.rotation.set(.3, .4, .5); // set rotation again to see changes to reorder
 console.log(`group quaternion: x=${group.quaternion. x}, y=${group.quaternion.y}, z=${group.quaternion.z}, w=${group.quaternion.w}`);
-// group.position.set(2, 2, 2)
+
 scene.add(group);
+
+// -----------------------
+// custom geometries
+// -----------------------
 
 const geometry = new THREE.BufferGeometry()
 const positionArray = new Float32Array([
@@ -71,7 +76,7 @@ geometry.setAttribute('position', positionAttribute)
 const triangle = new THREE.Mesh(geometry, solidMaterial)
 scene.add(triangle)
 
-const count = {value: 50}
+const count = { value: 50 }
 
 const wavyPlane = new THREE.BufferGeometry()
 const wavyArray = new Float32Array(count.value * 3 * 3) // 3 values per vertex and 3 points per triangle
@@ -86,27 +91,6 @@ const wavyPositionAttribute = new THREE.BufferAttribute(wavyArray, 3)
 
 wavyPlane.setAttribute('position', wavyPositionAttribute)
 scene.add(new THREE.Mesh(wavyPlane, material))
-
-// -----------------------
-// debug gui
-// -----------------------
-
-const gui = new GUI()
-
-gui.add(group.position, 'x', -10, 10, .01)
-
-gui.add(triangle.position, 'y', -10, 10, .01).name('triangle elevation')
-
-gui.add(count, 'value', 0, 100, 1)
-gui.add(material, 'wireframe')
-gui
-    .addColor(material, 'color')
-    .onChange((value) => {
-        console.log(value.getHexString())
-    })
-
-// gui.add(solidMaterial, 'wireframe')
-// gui.addColor(solidMaterial, 'color')
 
 // -----------------------
 // helpers
@@ -139,14 +123,23 @@ const renderer = new THREE.WebGLRenderer({
 // cameras
 // -----------------------
 const aspectRatio = sizes.width / sizes.height
-const camera = new THREE.PerspectiveCamera(75, aspectRatio, .1, 100); // aperature, aspectRatio, frontClip, backClip
-// const orthoZoom = 3
-// const camera = new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100);
-camera.position.set(2, 1, 10);
+const orthoZoom = 3
 
-camera.lookAt(axesHelper.position);
+// const camera = new THREE.PerspectiveCamera(75, aspectRatio, .1, 100); // aperature, aspectRatio, frontClip, backClip
+const cameraSelection = { type: new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100)}
+
+const cameras = { 
+    "persp" : new THREE.PerspectiveCamera(75, aspectRatio, .1, 100), // aperature, aspectRatio, frontClip, backClip
+    "ortho" : new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100)
+    }
+
+const camera = cameraSelection.type
+
+cameraSelection.type.position.set(2, 1, 10);
+cameraSelection.type.lookAt(axesHelper.position);
+
 renderer.setSize(sizes.width, sizes.height);
-renderer.render(scene, camera);
+renderer.render(scene, cameraSelection.type);
 
 // window.addEventListener('scroll', (event) => {
 //     event
@@ -158,7 +151,7 @@ renderer.render(scene, camera);
 
 console.log(`boxMesh position length: ${boxMesh.position.length()}`)
 console.log(`boxMesh position normalized: ${boxMesh.position.normalize().x}, ${boxMesh.position.normalize().y}, ${boxMesh.position.normalize().z}`)
-console.log(`boxMesh position distance to camera: ${boxMesh.position.distanceTo(camera.position)}`)
+console.log(`boxMesh position distance to camera: ${boxMesh.position.distanceTo(cameraSelection.type.position)}`)
 
 // -----------------------
 // mouse interactions
@@ -185,9 +178,7 @@ window.addEventListener('resize', () => {
     camera.aspect = sizes.width / sizes.height
     camera.updateProjectionMatrix()
     renderer.setSize(sizes.width, sizes.height)
-}
-
-)
+})
 
 // -----------------------
 // animations
@@ -210,7 +201,7 @@ const sphereAnimations = (sphereMesh, elapsedTime) => {
     sphereMesh.position.z = Math.cos(elapsedTime * 2) * .5
 }
 
-const updateCamera = (elapsedTime, cursor) => {
+const updateCamera = (elapsedTime, cursor, camera) => {
     
     // camera.position.x = cursor.x * Math.PI * -10
     // camera.position.y = cursor.y * Math.PI * -10
@@ -227,8 +218,55 @@ const updateCamera = (elapsedTime, cursor) => {
 // controls
 // -----------------------
 
-const controls = new OrbitControls(camera, canvas);
+const controls = new OrbitControls(cameraSelection.type, canvas);
 controls.enableDamping = true;
+
+// -----------------------
+// debug gui
+// -----------------------
+
+const gui = new GUI()
+
+gui.add(group.position, 'x', -10, 10, .01)
+
+gui.add(triangle.position, 'y', -10, 10, .01).name('triangle elevation')
+gui.add(triangle, 'visible').name('triangle visibility')
+
+// gui.add(count, 'value') // not working
+gui.add(material, 'wireframe')
+gui
+    .addColor(material, 'color')
+    .onChange((value) => {
+        console.log(value.getHexString())
+    })
+
+gui.add(solidMaterial, 'wireframe')
+gui.addColor(solidMaterial, 'color')
+
+gui.add(cameraSelection, 'type', cameras).onChange((newCamera) => {
+    // Save the old camera's position and target BEFORE the switch
+    const oldPosition = controls.object.position.clone();
+    const oldTarget = controls.target.clone();
+    
+    // Copy to the new camera
+    newCamera.position.copy(oldPosition);
+    newCamera.lookAt(oldTarget);
+    
+    // Update the controls to use the new camera
+    controls.object = newCamera;
+    controls.target.copy(oldTarget);
+    
+    // Update aspect ratio for perspective camera
+    if (newCamera.isPerspectiveCamera) {
+        newCamera.aspect = sizes.width / sizes.height;
+        newCamera.updateProjectionMatrix();
+    } else if (newCamera.isOrthographicCamera) {
+        // Update orthographic camera frustum if needed
+        newCamera.updateProjectionMatrix();
+    }
+    
+    controls.update();
+});
 
 // -----------------------
 // render
@@ -241,14 +279,14 @@ const render = () => {
     
     groupAnimations(group, elapsedTime);
     sphereAnimations(sphereMesh, elapsedTime);
-    // updateCamera(elapsedTime, cursor);
+    // updateCamera(elapsedTime, cursor, cameraSelection.type);
     
     controls.update();
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    renderer.render(scene, camera);
+    renderer.render(scene, cameraSelection.type);
     
-    camera.lookAt(sphereMesh.position)
+    cameraSelection.type.lookAt(sphereMesh.position)
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 

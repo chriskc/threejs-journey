@@ -39,7 +39,6 @@ loadingManager.onError = () => {
 
 // easiser way with three's texture loader
 const textureLoader = new THREE.TextureLoader(loadingManager)
-// const colorTexture = textureLoader.load('static/textures/door/color.jpg')
 const colorTexture = textureLoader.load('static/textures/minecraft.png')
 colorTexture.colorSpace = THREE.SRGBColorSpace // for correct color space
 colorTexture.repeat.x = 2
@@ -58,21 +57,27 @@ colorTexture.generateMipmaps = false
 colorTexture.magFilter = THREE.NearestFilter
 
 
-const alphaTexture = textureLoader.load('/static/textures/door/alpha.jpg')
-const heightTexture = textureLoader.load('/static/textures/door/height.jpg')
-const normalTexture = textureLoader.load('/static/textures/door/normal.jpg')
-const ambientOcclusionTexture = textureLoader.load('/static/textures/door/ambientOcclusion.jpg')
-const metalnessTexture = textureLoader.load('/static/textures/door/metalness.jpg')
-const roughnessTexture = textureLoader.load('/static/textures/door/roughness.jpg')
+const doorColorTexture = textureLoader.load('static/textures/door/color.jpg')
+doorColorTexture.colorSpace =THREE.SRGBColorSpace
+const doorAlphaTexture = textureLoader.load('/static/textures/door/alpha.jpg')
+const doorHeightTexture = textureLoader.load('/static/textures/door/height.jpg')
+const doorNormalTexture = textureLoader.load('/static/textures/door/normal.jpg')
+const doorAmbientOcclusionTexture = textureLoader.load('/static/textures/door/ambientOcclusion.jpg')
+const doorMetalnessTexture = textureLoader.load('/static/textures/door/metalness.jpg')
+const doorRoughnessTexture = textureLoader.load('/static/textures/door/roughness.jpg')
 
-console.log(colorTexture)
-console.log(alphaTexture)
-console.log(heightTexture)
-console.log(normalTexture)
-console.log(ambientOcclusionTexture)
-console.log(metalnessTexture)
-console.log(roughnessTexture)
+console.log(doorColorTexture)
+console.log(doorAlphaTexture)
+console.log(doorHeightTexture)
+console.log(doorNormalTexture)
+console.log(doorAmbientOcclusionTexture)
+console.log(doorMetalnessTexture)
+console.log(doorRoughnessTexture)
 
+const matcapTexture = textureLoader.load('static/textures/matcaps/4.png')
+const gradientTexture = textureLoader.load('static/textures/gradients/5.jpg')
+gradientTexture.minFilter = THREE.NearestFilter
+gradientTexture.magFilter = THREE.NearestFilter
 
 // -----------------------
 // MATERIALS
@@ -81,8 +86,40 @@ console.log(roughnessTexture)
 defaultObject.color = '#ff00ff'
 
 const material = new THREE.MeshBasicMaterial({ color: defaultObject.color, wireframe: true })
+
 const solidMaterial = new THREE.MeshBasicMaterial({ color: 0x0000cc, wireframe: false})
-const doorMaterial = new THREE.MeshBasicMaterial({map: colorTexture})
+solidMaterial.side = THREE.DoubleSide
+
+const doorMaterial = new THREE.MeshBasicMaterial({ color: '#dd889d', map: doorColorTexture })
+doorMaterial.side = THREE.DoubleSide
+doorMaterial.transparent = true
+doorMaterial.opacity = 0.8
+doorMaterial.alphaMap = doorAlphaTexture
+
+const normalMaterial = new THREE.MeshNormalMaterial({ wireframe: true, flatShading: true})
+const matcapMaterial = new THREE.MeshMatcapMaterial({matcap: matcapTexture})
+const depthMaterial = new THREE.MeshDepthMaterial()
+const lambertMaterial = new THREE.MeshLambertMaterial()
+const phongMaterial = new THREE.MeshPhongMaterial()
+phongMaterial.shininess = 100
+phongMaterial.specular = new THREE.Color(0x0000ff)
+
+const toonMaterial = new THREE.MeshToonMaterial({ color: '#ffffff'})
+toonMaterial.gradientMap = gradientTexture
+
+
+// -----------------------
+// LIGHTS
+// -----------------------
+
+const ambientLight = new THREE.AmbientLight('#ffffff', 1)
+const pointLight = new THREE.PointLight('#ffffff', 30)
+pointLight.position.set(-8, 3, 4)
+const pointLightHelper = new THREE.PointLightHelper(pointLight, .1)
+
+scene.add(ambientLight, pointLight, pointLightHelper)
+
+
 
 // -----------------------
 // GEOMETRY
@@ -95,9 +132,22 @@ defaultObject.radius = .75
 defaultObject.subdivisions = 10
 
 const sphereGeometry = new THREE.SphereGeometry(defaultObject.radius, defaultObject.subdivisions, defaultObject.subdivisions);
-const sphereMesh = new THREE.Mesh(sphereGeometry, material);
+
+const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
 sphereMesh.position.x = -1;
 scene.add(sphereMesh);
+
+const sphereMesh2 = new THREE.Mesh(sphereGeometry, matcapMaterial);
+sphereMesh2.position.x = -5.75;
+scene.add(sphereMesh2);
+
+// torus
+// -----------------------
+
+const torusGeometry = new THREE.TorusGeometry(.75)
+const torusMesh = new THREE.Mesh(torusGeometry, toonMaterial)
+torusMesh.position.x = -8;
+scene.add(torusMesh)
 
 // boxes
 // -----------------------
@@ -113,7 +163,7 @@ scene.add(boxMesh4)
 
 boxMesh2.position.x = 2;
 boxMesh3.position.x = -2;
-boxMesh4.position.y = -2;
+boxMesh4.position.x = -4;
 
 group.add(boxMesh, boxMesh2, boxMesh3)
 
@@ -143,8 +193,8 @@ const positionArray = new Float32Array([
 const positionAttribute = new THREE.BufferAttribute(positionArray, 3)
 
 geometry.setAttribute('position', positionAttribute)
-// const triangle = new THREE.Mesh(geometry, solidMaterial)
-const triangle = new THREE.Mesh(geometry, doorMaterial)
+const triangle = new THREE.Mesh(geometry, solidMaterial)
+// const triangle = new THREE.Mesh(geometry, doorMaterial)
 scene.add(triangle)
 
 const count = { value: 50 }
@@ -197,7 +247,7 @@ const renderer = new THREE.WebGLRenderer({
 // CAMERAS
 // -----------------------
 const aspectRatio = sizes.width / sizes.height
-const orthoZoom = 3
+const orthoZoom = 8
 
 // const camera = new THREE.PerspectiveCamera(75, aspectRatio, .1, 100); // aperature, aspectRatio, frontClip, backClip
 const cameraSelection = { type: new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100)}
@@ -310,9 +360,11 @@ window.addEventListener('keydown', (event) => {
 // geometry
 // -------------
 const sphereTweaks = gui.addFolder('sphere')
-sphereTweaks.add(defaultObject, 'subdivisions', 5, 20, 1).onFinishChange(() => {
+sphereTweaks.add(defaultObject, 'subdivisions', 2, 30, 1).onFinishChange(() => {
     sphereMesh.geometry.dispose()
     sphereMesh.geometry = new THREE.SphereGeometry(defaultObject.radius, defaultObject.subdivisions, defaultObject.subdivisions)
+    sphereMesh2.geometry.dispose()
+    sphereMesh2.geometry = new THREE.SphereGeometry(defaultObject.radius, defaultObject.subdivisions, defaultObject.subdivisions)
     console.log('Geometries on GPU:', renderer.info.memory.geometries);
 })
 

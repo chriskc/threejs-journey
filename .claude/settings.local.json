@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\repos\\threejs-journey\\static\\textures\\environmentMap\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

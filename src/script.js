@@ -1,9 +1,9 @@
 import gsap from 'gsap';
 import GUI from 'lil-gui';
 import * as THREE from 'three';
+import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import './style.css';
-
 
 console.log("helloooo");
 
@@ -107,6 +107,57 @@ phongMaterial.specular = new THREE.Color(0x0000ff)
 const toonMaterial = new THREE.MeshToonMaterial({ color: '#ffffff'})
 toonMaterial.gradientMap = gradientTexture
 
+// const standardMaterial = new THREE.MeshStandardMaterial()
+const standardMaterial = new THREE.MeshPhysicalMaterial()
+standardMaterial.metalness = 1
+standardMaterial.roughness = 1
+standardMaterial.side = THREE.DoubleSide
+standardMaterial.transparent = true
+standardMaterial.opacity = 1
+standardMaterial.alphaMap = doorAlphaTexture
+standardMaterial.normalMap = doorNormalTexture
+standardMaterial.normalScale.set(0.5, 0.5)
+standardMaterial.map = doorColorTexture
+standardMaterial.aoMap = doorAmbientOcclusionTexture
+standardMaterial.aoMapIntensity = 1
+standardMaterial.displacementMap = doorHeightTexture
+standardMaterial.displacementScale = .1
+standardMaterial.metalnessMap - doorMetalnessTexture
+standardMaterial.roughnessMap - doorRoughnessTexture
+
+// for MeshPhysicalMaterial only
+// standardMaterial.clearcoat = 1
+// standardMaterial.clearcoatRoughness = 0
+
+// standardMaterial.sheen = 1
+// standardMaterial.sheenRoughness = 0.25
+// standardMaterial.sheenColor.set(1, 1, 1)
+
+// standardMaterial.iridescence = 1
+// standardMaterial.iridescenceIOR = 1
+// standardMaterial.iridescenceThicknessRange = [ 100, 800 ]
+
+const glassMaterial = new THREE.MeshPhysicalMaterial()
+glassMaterial.transmission = 1
+glassMaterial.ior = 1.5
+glassMaterial.thickness = 0.5
+glassMaterial.metalness = 0
+glassMaterial.roughness = 0
+
+// -----------------------
+// ENVIRONMENT MAP
+// -----------------------
+
+const hdrLoader = new HDRLoader()
+hdrLoader.load('static/textures/environmentMap/2k.hdr', (environmentMap) => {
+    environmentMap.mapping = THREE.EquirectangularReflectionMapping
+
+    scene.background = environmentMap
+    scene.environment = environmentMap
+
+    console.log('Environment map loaded successfully')
+})
+
 
 // -----------------------
 // LIGHTS
@@ -118,7 +169,6 @@ pointLight.position.set(-8, 3, 4)
 const pointLightHelper = new THREE.PointLightHelper(pointLight, .1)
 
 scene.add(ambientLight, pointLight, pointLightHelper)
-
 
 
 // -----------------------
@@ -149,6 +199,11 @@ const torusMesh = new THREE.Mesh(torusGeometry, toonMaterial)
 torusMesh.position.x = -8;
 scene.add(torusMesh)
 
+const torusGeometry2 = new THREE.TorusGeometry(.75)
+const torusMesh2 = new THREE.Mesh(torusGeometry2, glassMaterial)
+torusMesh2.position.x = -11;
+scene.add(torusMesh2)
+
 // boxes
 // -----------------------
 
@@ -158,7 +213,7 @@ const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1, 2, 2, 2), ma
 const boxMesh2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 const boxMesh3 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 
-const boxMesh4 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), doorMaterial);
+const boxMesh4 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1, 100, 100), standardMaterial);
 scene.add(boxMesh4)
 
 boxMesh2.position.x = 2;
@@ -243,6 +298,9 @@ const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 });
 
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1;
+
 // -----------------------
 // CAMERAS
 // -----------------------
@@ -250,17 +308,18 @@ const aspectRatio = sizes.width / sizes.height
 const orthoZoom = 8
 
 // const camera = new THREE.PerspectiveCamera(75, aspectRatio, .1, 100); // aperature, aspectRatio, frontClip, backClip
-const cameraSelection = { type: new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100)}
 
-const cameras = { 
+const cameras = {
     "persp" : new THREE.PerspectiveCamera(75, aspectRatio, .1, 100), // aperature, aspectRatio, frontClip, backClip
     "ortho" : new THREE.OrthographicCamera(-aspectRatio*orthoZoom, aspectRatio*orthoZoom, orthoZoom, -orthoZoom, 0.1, 100)
     }
 
+const cameraSelection = { type: cameras.persp }
+
 const camera = cameraSelection.type
 
-cameraSelection.type.position.set(2, 1, 10);
-cameraSelection.type.lookAt(axesHelper.position);
+cameraSelection.type.position.set(-6, 1, 5);
+cameraSelection.type.lookAt(boxMesh4.position);
 
 renderer.setSize(sizes.width, sizes.height);
 renderer.render(scene, cameraSelection.type);
@@ -388,6 +447,13 @@ materialTweaks
     })
 materialTweaks.add(solidMaterial, 'wireframe')
 materialTweaks.addColor(solidMaterial, 'color')
+
+materialTweaks.add(standardMaterial, 'metalness', 0, 1, 0.001)
+materialTweaks.add(standardMaterial, 'roughness', 0, 1, 0.001)
+
+materialTweaks.add(glassMaterial, 'transmission').min(0).max(1).step(0.0001)
+materialTweaks.add(glassMaterial, 'ior').min(1).max(10).step(0.0001)
+materialTweaks.add(glassMaterial, 'thickness').min(0).max(1).step(0.0001)
 
 // cameras
 // -------------

@@ -1,8 +1,9 @@
 import gsap from 'gsap';
 import GUI from 'lil-gui';
 import * as THREE from 'three';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { OrbitControls, TextGeometry } from 'three/examples/jsm/Addons.js';
 import './style.css';
 
 console.log("helloooo");
@@ -98,6 +99,8 @@ doorMaterial.alphaMap = doorAlphaTexture
 
 const normalMaterial = new THREE.MeshNormalMaterial({ wireframe: true, flatShading: true})
 const matcapMaterial = new THREE.MeshMatcapMaterial({matcap: matcapTexture})
+matcapMaterial.wireframe = false
+
 const depthMaterial = new THREE.MeshDepthMaterial()
 const lambertMaterial = new THREE.MeshLambertMaterial()
 const phongMaterial = new THREE.MeshPhongMaterial()
@@ -138,26 +141,65 @@ standardMaterial.roughnessMap - doorRoughnessTexture
 // standardMaterial.iridescenceThicknessRange = [ 100, 800 ]
 
 const glassMaterial = new THREE.MeshPhysicalMaterial()
-glassMaterial.transmission = 1
+glassMaterial.transmission = .95
 glassMaterial.ior = 1.5
 glassMaterial.thickness = 0.5
 glassMaterial.metalness = 0
 glassMaterial.roughness = 0
+glassMaterial.side = THREE.DoubleSide
 
 // -----------------------
 // ENVIRONMENT MAP
 // -----------------------
 
 const hdrLoader = new HDRLoader()
-hdrLoader.load('static/textures/environmentMap/2k.hdr', (environmentMap) => {
-    environmentMap.mapping = THREE.EquirectangularReflectionMapping
+// hdrLoader.load('static/textures/environmentMap/2k.hdr', (environmentMap) => {
+//     environmentMap.mapping = THREE.EquirectangularReflectionMapping
+    
+//     scene.background = environmentMap
+//     scene.environment = environmentMap
+    
+//     console.log('Environment map loaded successfully')
+// })
 
-    scene.background = environmentMap
-    scene.environment = environmentMap
+// -----------------------
+// FONT
+// -----------------------
 
-    console.log('Environment map loaded successfully')
+const fontLoader = new FontLoader()
+fontLoader.load('static/fonts/helvetiker_regular.typeface.json', (font) => {
+    console.log(font)
+    const textGeometry = new TextGeometry(
+        'chris k chan',
+        {
+            font: font,
+            size: 0.5,
+            depth: 0.2,
+            curveSegments:6,
+            bevelEnabled: true,
+            bevelThickness: 0.03,
+            bevelSize: 0.02,
+            bevelOffset: 0,
+            bevelSegments: 4,
+        }
+    )
+    
+    // textGeometry.computeBoundingBox()
+    // textGeometry.translate(
+    //     - (textGeometry.boundingBox.max.x - 0.02) * 0.5,
+    //     - (textGeometry.boundingBox.max.y - 0.02) * 0.5,
+    //     - (textGeometry.boundingBox.max.z - 0.03) * 0.5,
+    // )
+    
+    textGeometry.center()
+
+    textGeometry.computeBoundingBox()
+    console.log(textGeometry.boundingBox)
+    
+    const text = new THREE.Mesh(textGeometry, matcapMaterial)
+    scene.add(text)
+
 })
-
 
 // -----------------------
 // LIGHTS
@@ -204,6 +246,26 @@ const torusMesh2 = new THREE.Mesh(torusGeometry2, glassMaterial)
 torusMesh2.position.x = -11;
 scene.add(torusMesh2)
 
+console.time('donut loading')
+const torusGeometry3 = new THREE.TorusGeometry(0.55)
+for (let i = 0; i < 400; i++) {
+    const donut = new THREE.Mesh(torusGeometry3, matcapMaterial)
+    const spread = 20
+    donut.position.set(
+        (Math.random() - 0.5) * spread,
+        (Math.random() - 0.5) * spread,
+        (Math.random() - 0.5) * spread
+    )
+    const randomSize = Math.random() * 0.5
+    donut.rotation.x = Math.random() * Math.PI
+    donut.rotation.y = Math.random() * Math.PI
+    donut.scale.set(randomSize, randomSize, randomSize)
+    scene.add(donut)
+}
+
+console.timeEnd('donut loading')
+
+
 // boxes
 // -----------------------
 
@@ -241,15 +303,32 @@ scene.add(group);
 
 const geometry = new THREE.BufferGeometry()
 const positionArray = new Float32Array([
-    0, 0, 0,
+    -5, -5, 0,
     4, -1, 3,
     2, -.25, -3
 ])
 const positionAttribute = new THREE.BufferAttribute(positionArray, 3)
 
 geometry.setAttribute('position', positionAttribute)
-const triangle = new THREE.Mesh(geometry, solidMaterial)
-// const triangle = new THREE.Mesh(geometry, doorMaterial)
+geometry.computeVertexNormals()
+const triangle = new THREE.Mesh(geometry, glassMaterial)
+
+
+// const shape = new THREE.Shape()
+// shape.moveTo(0, -5)
+// shape.lineTo(4, -1)
+// shape.lineTo(2, -.25)
+// shape.lineTo(0, -5)
+
+// const extrudeSettings = {
+//     depth: 0.5,
+//     bevelEnabled: true
+// }
+
+// const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+// const triangle = new THREE.Mesh(geometry, glassMaterial)
+// triangle.rotation.x = -Math.PI / 2
+
 scene.add(triangle)
 
 const count = { value: 50 }
@@ -278,10 +357,10 @@ scene.add(wavyMesh)
 const axesHelper = new THREE.AxesHelper(1);
 // axesHelper.position.set(0, 1, 0);
 // axesHelper.rotation.set(0, Math.PI / 1.2, 0);
-scene.add(axesHelper);
+// scene.add(axesHelper);
 
 const gridHelper = new THREE.GridHelper(10, 10);
-scene.add(gridHelper);
+// scene.add(gridHelper);
 
 // -----------------------
 // RENDERER

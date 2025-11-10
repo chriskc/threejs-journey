@@ -22,7 +22,7 @@ const scene = new THREE.Scene();
 // image.addEventListener('load', () => {
 //     texture.needsUpdate = true
 // })
-// image.src = 'static/textures/door/color.jpg'
+// image.src = 'public/textures/door/color.jpg'
 
 const loadingManager = new THREE.LoadingManager()
 loadingManager.onStart = () => {
@@ -40,7 +40,7 @@ loadingManager.onError = () => {
 
 // easiser way with three's texture loader
 const textureLoader = new THREE.TextureLoader(loadingManager)
-const colorTexture = textureLoader.load('static/textures/minecraft.png')
+const colorTexture = textureLoader.load('public/textures/minecraft.png')
 colorTexture.colorSpace = THREE.SRGBColorSpace // for correct color space
 colorTexture.repeat.x = 2
 colorTexture.repeat.y = 2
@@ -58,14 +58,14 @@ colorTexture.generateMipmaps = false
 colorTexture.magFilter = THREE.NearestFilter
 
 
-const doorColorTexture = textureLoader.load('static/textures/door/color.jpg')
+const doorColorTexture = textureLoader.load('public/textures/door/color.jpg')
 doorColorTexture.colorSpace =THREE.SRGBColorSpace
-const doorAlphaTexture = textureLoader.load('/static/textures/door/alpha.jpg')
-const doorHeightTexture = textureLoader.load('/static/textures/door/height.jpg')
-const doorNormalTexture = textureLoader.load('/static/textures/door/normal.jpg')
-const doorAmbientOcclusionTexture = textureLoader.load('/static/textures/door/ambientOcclusion.jpg')
-const doorMetalnessTexture = textureLoader.load('/static/textures/door/metalness.jpg')
-const doorRoughnessTexture = textureLoader.load('/static/textures/door/roughness.jpg')
+const doorAlphaTexture = textureLoader.load('/public/textures/door/alpha.jpg')
+const doorHeightTexture = textureLoader.load('/public/textures/door/height.jpg')
+const doorNormalTexture = textureLoader.load('/public/textures/door/normal.jpg')
+const doorAmbientOcclusionTexture = textureLoader.load('/public/textures/door/ambientOcclusion.jpg')
+const doorMetalnessTexture = textureLoader.load('/public/textures/door/metalness.jpg')
+const doorRoughnessTexture = textureLoader.load('/public/textures/door/roughness.jpg')
 
 console.log(doorColorTexture)
 console.log(doorAlphaTexture)
@@ -75,8 +75,8 @@ console.log(doorAmbientOcclusionTexture)
 console.log(doorMetalnessTexture)
 console.log(doorRoughnessTexture)
 
-const matcapTexture = textureLoader.load('static/textures/matcaps/4.png')
-const gradientTexture = textureLoader.load('static/textures/gradients/5.jpg')
+const matcapTexture = textureLoader.load('public/textures/matcaps/4.png')
+const gradientTexture = textureLoader.load('public/textures/gradients/5.jpg')
 gradientTexture.minFilter = THREE.NearestFilter
 gradientTexture.magFilter = THREE.NearestFilter
 
@@ -141,9 +141,9 @@ standardMaterial.roughnessMap - doorRoughnessTexture
 // standardMaterial.iridescenceThicknessRange = [ 100, 800 ]
 
 const glassMaterial = new THREE.MeshPhysicalMaterial()
-glassMaterial.transmission = .95
-glassMaterial.ior = 1.5
-glassMaterial.thickness = 0.5
+glassMaterial.transmission = 0.9
+glassMaterial.ior = 3
+glassMaterial.thickness = 0.7
 glassMaterial.metalness = 0
 glassMaterial.roughness = 0
 glassMaterial.side = THREE.DoubleSide
@@ -153,7 +153,7 @@ glassMaterial.side = THREE.DoubleSide
 // -----------------------
 
 const hdrLoader = new HDRLoader()
-// hdrLoader.load('static/textures/environmentMap/2k.hdr', (environmentMap) => {
+// hdrLoader.load('public/textures/environmentMap/2k.hdr', (environmentMap) => {
 //     environmentMap.mapping = THREE.EquirectangularReflectionMapping
     
 //     scene.background = environmentMap
@@ -167,7 +167,7 @@ const hdrLoader = new HDRLoader()
 // -----------------------
 
 const fontLoader = new FontLoader()
-fontLoader.load('static/fonts/helvetiker_regular.typeface.json', (font) => {
+fontLoader.load('public/fonts/helvetiker_regular.typeface.json', (font) => {
     console.log(font)
     const textGeometry = new TextGeometry(
         'chris k chan',
@@ -276,7 +276,7 @@ const boxMesh2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 const boxMesh3 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), material);
 
 const boxMesh4 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1, 100, 100), standardMaterial);
-scene.add(boxMesh4)
+// scene.add(boxMesh4)
 
 boxMesh2.position.x = 2;
 boxMesh3.position.x = -2;
@@ -486,7 +486,7 @@ const gui = new GUI({
     title: 'best pizza',
 })
 
-// gui.hide()
+gui.hide()
 
 // toggle debug ui with 'h' kb shortcut
 window.addEventListener('keydown', (event) => {
@@ -512,7 +512,7 @@ sphereTweaks.add(defaultObject, 'subdivisions', 2, 30, 1).onFinishChange(() => {
 const triangleTweaks = gui.addFolder('triangle')
 triangleTweaks.add(triangle.position, 'y', -10, 10, .01).name('triangle elevation')
 triangleTweaks.add(triangle, 'visible').name('triangle visibility')
-
+                                                       
 // materials
 // -------------
 

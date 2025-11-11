@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir \"c:\\repos\\threejs-journey\\static\\textures\\environmentMap\")"
+      "Bash(dir \"c:\\repos\\threejs-journey\\static\\textures\\environmentMap\")",
+      "Bash(dir /B /S c:reposthreejs-journey*.png c:reposthreejs-journey*.jpg 2)",
+      "Bash(nul)",
+      "Bash(findstr:*)",
+      "Bash(if not exist public mkdir public)",
+      "Bash(xcopy:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run deploy:*)"
     ],
     "deny": [],
     "ask": []

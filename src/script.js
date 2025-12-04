@@ -11,16 +11,16 @@ import {
     standardMaterial
 } from './materials.js';
 import {
-    scene,
-    sphereParams,
-    sphereMesh,
-    sphereMesh2,
-    group,
+    axesHelper,
     boxMesh,
     boxMesh4,
+    group,
+    scene,
+    sphereMesh,
+    sphereMesh2,
+    sphereParams,
     triangle,
-    wavyMesh,
-    axesHelper
+    wavyMesh
 } from './scene.js';
 import './style.css';
 
@@ -95,6 +95,7 @@ renderer.toneMappingExposure = 1;
 // -----------------------
 // CAMERAS
 // -----------------------
+
 const aspectRatio = sizes.width / sizes.height
 const orthoZoom = 8
 

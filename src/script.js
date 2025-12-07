@@ -1,7 +1,7 @@
 import GUI from 'lil-gui'
 import * as THREE from 'three'
+import { RectAreaLightHelper } from 'three/examples/jsm/Addons.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-
 /**
  * Base
  */
@@ -17,14 +17,80 @@ const scene = new THREE.Scene()
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.5)
+
+// minimal performance cost
+// ------------------------------------
+const ambientLight = new THREE.AmbientLight(0xffffff, .25)
 scene.add(ambientLight)
 
-const pointLight = new THREE.PointLight(0xffffff, 50)
+// create hemisphere light
+const hemisphereLight  = new THREE.HemisphereLight(0x5500ff, 0x338800, 3)
+scene.add(hemisphereLight)
+const hemisphereLightHelper = new THREE.HemisphereLightHelper(hemisphereLight, .1)
+
+
+// moderate performance cost
+// ------------------------------------
+const pointLight = new THREE.PointLight(0xffffff, 40)
 pointLight.position.x = 2
 pointLight.position.y = 3
 pointLight.position.z = 4
 scene.add(pointLight)
+
+// create point light
+const pointLight2 = new THREE.PointLight(0xff0000, 5, 2, 1)
+pointLight2.position.set(-.75, 0, 1)
+scene.add(pointLight2)
+const pointLightHelper = new THREE.PointLightHelper(pointLight2, .1)
+
+// create directional light
+const directionalLight = new THREE.DirectionalLight(0x5500ff, 5)
+directionalLight.position.set(1,1,1)
+// scene.add(directionalLight)
+const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, .25)
+
+
+// high performance cost
+// ------------------------------------
+
+// create rectarealight
+const rectAreaLight = new THREE.RectAreaLight(0xffffff, 10, 5, 2)
+// scene.add(rectAreaLight)
+const rectAreaLightHelper = new RectAreaLightHelper(rectAreaLight)
+
+// create spotlight
+const spotlight = new THREE.SpotLight(0x0000ff, 100, 10, Math.PI * 0.1, 1, .5)
+spotlight.position.set(0, 2, 3)
+scene.add(spotlight)
+spotlight.target.position.x = 0.75
+scene.add(spotlight.target)
+const spotlightHelper = new THREE.SpotLightHelper(spotlight, 0xffffff)
+
+
+// light helpers & controls
+// ------------------------------------
+const lightHelpers = [
+    directionalLightHelper,
+    hemisphereLightHelper,
+    pointLightHelper,
+    rectAreaLightHelper,
+    spotlightHelper
+]
+
+window.addEventListener('keydown', (e) => {
+    if (e.key == 'h')
+        for (const helper of lightHelpers) {
+            scene.add(helper)
+        }
+})
+
+window.addEventListener('keyup', (e) => {
+    if (e.key == 'h')
+        for (const helper of lightHelpers) {
+            scene.remove(helper)
+        }
+})
+
 
 /**
  * Objects
@@ -32,7 +98,12 @@ scene.add(pointLight)
 // Material
 const material = new THREE.MeshStandardMaterial()
 material.roughness = 0.4
-material.side = THREE.DoubleSide
+// material.side = THREE.DoubleSide
+
+const groundMaterial = new THREE.MeshStandardMaterial()
+groundMaterial.roughness = .75
+groundMaterial.color = new THREE.Color(0x113300)
+groundMaterial.side = THREE.DoubleSide
 
 // Objects
 const sphere = new THREE.Mesh(
@@ -54,7 +125,7 @@ torus.position.x = 1.5
 
 const plane = new THREE.Mesh(
     new THREE.PlaneGeometry(5, 5),
-    material
+    groundMaterial
 )
 plane.rotation.x = - Math.PI * 0.5
 plane.position.y = - 0.65
